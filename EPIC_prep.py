@@ -7,7 +7,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-from Spec_prep import rHARPS, rflatHARPS, HAR2HER, HAR2HER2, rHERMES_prep, \
+from EPIC_scripts import rHARPS, rflatHARPS, HAR2HER, HAR2HER2, rHERMES_prep, \
                       read_unreduced, normalize_HERMES, wHERMES, wHERMES2
 
 

@@ -29,7 +29,7 @@ from EPIC_functions import Gauss, parabel, hypersurface, hypersurfacelstsq, \
                            hypererr, gauss_function, linear_SNR, read_sky, \
                            find_nearest_idx, pivot_to_ap, renorm, dTemp_lin, \
                            dlogg_lin, dMetal
-from Spec_prep import addSN, addSN_simple, add_weight, air2vacESO, \
+from EPIC_scripts import addSN, addSN_simple, add_weight, air2vacESO, \
                       center_line, determine_radvel, prepare_reference_rv, \
                       prepare_reference, lineup, line_prep_plot, measure_EW, \
                       prepare_target_wavelegnth, readlinelistw, \
