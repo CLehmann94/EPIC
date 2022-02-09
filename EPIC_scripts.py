@@ -1529,12 +1529,8 @@ def rflatHARPS(FITSfile, obj=False, wavelenmin=False, date_obs=False,
         if SN:
             SNR = []
             for i in range(72):
-                try:
-                    card = 'HIERARCH ESO DRS SPE EXT SN' + str(i)
-                    SNR.append(header0[card])
-                except:
-                    card = 'HIERARCH ESO DRS CAL EXT SN' + str(i)
-                    SNR.append(header0[card])
+                card = 'HIERARCH ESO DRS SPE EXT SN' + str(i)
+                SNR.append(header0[card])
             result['SN'] = SNR
 
         result['w'] = w

@@ -1289,5 +1289,6 @@ if __name__ == '__main__':
         main_EPIC()
     else:
         for spec in argv[np.bitwise_not(switch)]:
+            print(argv[switch][-1])
             main_EPIC(argv=argv[switch], spec_name=spec[:-6],
                       ref_name=argv[switch][-1])
