@@ -760,13 +760,13 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
         con2 = np.bitwise_and(line - lwid_wav*2 < twav,
                               twav < line + lwid_wav*2)
 
-        if resolv_switch is True:
+        if resolv_switch is True and rnum == 2:
             R_ref = determine_resolving_power(rwav2[con], rflux2[con])
             R_tar = determine_resolving_power(twav[con2], tflux[con2])
             if R_ref != -1 and R_tar != -1:
                 R_weighted_average = np.append(R_weighted_average,
-                                               (R_ref - R_tar) * R_ref)
-                R_weight = np.append(R_weight, np.square(R_ref))
+                                               (R_tar - R_ref))
+                R_weight = np.append(R_weight, R_ref)
                 with open(Resolv_out, 'a+') as res_out:
                     res_out.write(str(ele) + '    ' + str(line) + '    ' +
                                   str(R_ref) + '    ' + str(R_tar) + '    ' +
@@ -1289,6 +1289,5 @@ if __name__ == '__main__':
         main_EPIC()
     else:
         for spec in argv[np.bitwise_not(switch)]:
-            print(argv[switch][-1])
             main_EPIC(argv=argv[switch], spec_name=spec[:-6],
                       ref_name=argv[switch][-1])
