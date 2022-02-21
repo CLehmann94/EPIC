@@ -112,7 +112,9 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     res_power_reduction = 0.0
     rvtoll = 800
     rnum = 0
-#    shift_lim = 0.0
+    sig_diff = 0.0
+    sig_ref = 0.0
+    sig_tar = 0.0
     SkyN = 0.11
     SNR_add = [1000, 1000, 1000, 1000]
     tnum = 0
@@ -160,6 +162,8 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     rspec = []
     rv_correct_wav = [0, 0, 0, 0]
     rv_flag = ['F', 'F', 'F', 'F']
+    sig_weight = np.array([])
+    sig_weighted = np.array([])
     sky_fits = []
     suc_ele = []
     suc_ion = []
@@ -177,6 +181,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     diff = False
     EW_file = False
     harps = False
+    Li_plot = False
     line_show = False
     ll_print = False
     ll_test_plot = False
@@ -248,7 +253,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             line_numb = int(argv[i+1])
         elif argv[i] == '--EW_only':
             EW_file = True
-        elif argv[i] == '--air_corr':
+        elif argv[i] == '--air_corr' or argv[i] == '-a':
             tair_corr = True
         elif argv[i] == '--multi_pivot' or argv[i] == '-m':
             single_pivot = False
@@ -272,7 +277,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             SNR_add[3] = float(argv[i+4])
         elif argv[i] == '--alt_sig':
             sig_mode = True
-        elif argv[i] == '--resolv':
+        elif argv[i] == '--resolv' or argv[i] == '-r':
             resolv_switch = True
 
         if spec_name.split('/')[-1].startswith('Norm_'):
@@ -717,8 +722,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             lpp_linew_old = float(line)
             lpp_window = float(lwid_wav * 4)
 
-        R_ref = 0
-
         twavcon = np.bitwise_and(nline - ls2_wav < twav,
                                  twav < nline + ls2_wav)
         rwavcon = np.bitwise_and(nline - (ls2_wav * 1.2) < rwav,
@@ -760,17 +763,29 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
         con2 = np.bitwise_and(line - lwid_wav*2 < twav,
                               twav < line + lwid_wav*2)
 
-        if resolv_switch is True and rnum == 2:
-            R_ref = determine_resolving_power(rwav2[con], rflux2[con])
-            R_tar = determine_resolving_power(twav[con2], tflux[con2])
-            if R_ref != -1 and R_tar != -1:
+        R_ref, R_tar = 0, 0
+        if resolv_switch is True:
+            R_ref, sig_ref, sig_ref_err = determine_resolving_power(
+                    rwav2[con], rflux2[con])
+            R_tar, sig_tar, sig_tar_err = determine_resolving_power(
+                    twav[con2], tflux[con2])
+            if R_ref > 18000 and R_tar > 1000:
                 R_weighted_average = np.append(R_weighted_average,
                                                (R_tar - R_ref))
                 R_weight = np.append(R_weight, R_ref)
+
+                sig_tar_err = np.sqrt(np.square(sig_tar_err / sig_ref) +
+                                      np.square(sig_ref_err * sig_tar /
+                                                np.square(sig_ref)))
+                sig_weighted = np.append(sig_weighted, (sig_tar / sig_ref))
+                sig_weight = np.append(sig_weight, 1 /
+                                       np.square(sig_tar_err))
                 with open(Resolv_out, 'a+') as res_out:
                     res_out.write(str(ele) + '    ' + str(line) + '    ' +
                                   str(R_ref) + '    ' + str(R_tar) + '    ' +
-                                  str(R_ref - R_tar) + '\n')
+                                  str(sig_ref) + '    ' + str(sig_ref_err) +
+                                  '    ' + str(sig_tar) + '    ' +
+                                  str(sig_tar_err) + '\n')
 
 # Giving minimal errors
         terr = np.where([e != e for e in terr], -1, terr)
@@ -790,7 +805,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
 
         traise_new = lineup(rflux2[con3], tflux[con4], rerr2[con3], terr[con4],
                             band=i, low_perc=low_perc,
-                            rv_weight=rv_weight[con4])
+                            rv_weight=rv_weight[con4], Li_plot=Li_plot)
         if traise_new is False:
             continue
         traise = np.append(traise, traise_new)
@@ -831,7 +846,8 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             plt.show()
             plt.clf()
 
-        if plot_switch3 is True and j == 40:
+#        if plot_switch3 is True and j == 40:
+        if plot_switch3 is True and ele == 'Li':
             pdf = matplotlib.backends.backend_pdf.PdfPages("Line_measure.pdf")
             fig, p = plt.subplots(1, 1)
             fig.set_figheight(6)
@@ -847,10 +863,12 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             p.legend(loc='lower right')
             p.set_xlabel(r'\LARGE Wavelength [\AA]')
             p.set_ylabel(r'\LARGE Normalized Flux')
+            p.set_ylim(0.7, 1.1)
 
             p.xaxis.set_minor_locator(AutoMinorLocator())
             p.yaxis.set_minor_locator(AutoMinorLocator())
             p.set_rasterization_zorder(-20)
+            plt.show()
             pdf.savefig(fig)
             plt.clf()
             pdf.close()
@@ -869,7 +887,8 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
 # by HERMES itself
         tweight, tnpix = add_weight(nline, lw2_wav, twav, terr, tdisp)
 
-        if np.sum(tweight) > np.sum(np.multiply(tweight, rv_weight)):
+        if np.sum(tweight) > np.sum(np.multiply(tweight, rv_weight)) and \
+           ele != 'Li':
             continue
 
         if plot_switch is True:
@@ -908,7 +927,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             lpp_weights = np.array(tweight[twavcon])
             lpp_twavcon = twavcon
 
-        if (rEW < 5 or tEW < 5) and int(line) != 6709:
+        if (rEW < 5 or tEW < 5) and ele != 'Li':
             count2 = count2+1
             if test_plot_end is True:
                 fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -937,7 +956,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                            + "{0:.4f}".format(EW_full_err) + '    '
                            + "#" + "\n")
             continue
-        if rEW*5 < tEW:
+        if rEW*5 < tEW and ele != 'Li':
             out_file.write(str(ele).ljust(3, ' ') + '    '
                            + str(int(io)) + '    '
                            + "{0:.4f}".format(line) + '    '
@@ -1005,6 +1024,9 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             Li_print = [rEW, rEW_sig, tEW, tEW_sig, wavshift2_pix]
     if len(R_weight) != 0 and len(R_weighted_average) != 0:
         res_power_reduction = np.sum(R_weighted_average) / np.sum(R_weight)
+        sig_diff = np.sum(np.multiply(sig_weighted, sig_weight)) / \
+            np.sum(sig_weight)
+        sig_diff_err = np.sqrt(1 / np.sum(sig_weight))
     else:
         res_power_reduction = 0
 
@@ -1222,16 +1244,17 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                 SP_header = True
             with open('stellar_params.dat', 'a') as out:
                 if SP_header is True:
-                    out.write('# ID                    T_eff    dT_eff   ' +
-                              'logg    dlogg    Fe_H      dFe_H    RV      ' +
-                              'Res_power_red     RV_flag   \n')
+                    out.write('# ID                     T_eff        dT_eff' +
+                              '     logg       dlogg      Fe_H        dFe_H' +
+                              '       RV          Res_power_red sig_diff   ' +
+                              ' sig_diff_err  RV_flag     \n')
                 out.write(('{:>5s} {:>11.1f} {:>11.1f} {:>11.4f}'
                           + '{:>11.4f} {:>11.5f} {:>11.5f} {:>11.5f} {:>11.5f}'
-                          + ' {:>5s}\n'
+                          + ' {:>13.5f} {:>13.5f} {:>9s}\n'
                            ).format(out_name, lstsq[0],
                           lstsq_sig[0], lstsq[1], lstsq_sig[1], lstsq[2],
                           lstsq_sig[2], rv_weighted_av, res_power_reduction,
-                          rv_flag_tot))
+                          sig_diff, sig_diff_err, rv_flag_tot))
     return 0
 
 

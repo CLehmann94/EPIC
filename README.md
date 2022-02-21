@@ -39,6 +39,8 @@ EPIC.py Reference_spectrum/HERMES_Kurucz example_spectra/Norm*2.fits
 Options:
 EPIC has several option that might be needed in different situations:
 
+-a, --air_corr: The spectrum is in air wavelength and therefore will need to be corrected to a vaccuum wavelength scale (using the Edlen 1953 formula).
+
 -e, --err [exptime] [vmag]: Add noise to the target spectrum by giving exposure time(s), mag of V band and base noise. The noise in each band is calculated using solar relations between the bands, e.g. the red band has r_mag = v_mag - 0.352
 
 -h, --harps: The target spectra are spectra taken with HARPS and simulated to HERMES resolution.
@@ -48,8 +50,6 @@ EPIC has several option that might be needed in different situations:
 --SNR [SNR_b] [SNR_v] [SNR_r] [SNR_ir]: Add noise to the the spectrum's flux and modify the error array accordingly via a specific signal-to-noise ratio for each band. The SNRs must be given in the order blue band SNR (spectrum ending in 1.fits), green band SNR (spectrum ending in 2.fits), red band SNR (spectrum ending in 3.fits) and infrared band SNR (spectrum ending in 4.fits).
 
 --SNR_err_only [SNR_b] [SNR_v] [SNR_r] [SNR_ir]: Similar process as in the above command, but only modifies the error array and leaves the flux array untouched. This is to give high SNR spectra (e.g. the solar atlas) a realistic error array that makes it better comparable with real HERMES spectra. in the calibrations we used --SNR_err_only 50 50 50 50 for all HARPS spectra and the solar atlas.
-
--v, --vac: The spectrum is in vaccuum and does not need to be corrected for it. By default every spectrum gets corrected from air wavelength to vaccuum wavelengths (using the Edlen 1953 formula). This is not adviced when working with HERMES spectra provided by GALAH.
 
 
 Output:

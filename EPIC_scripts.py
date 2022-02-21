@@ -386,7 +386,7 @@ def determine_resolving_power(w, f, deg=2, band=0, specres=28000, w2=[],
     try:
         popt, pcov = curve_fit(Gauss, w, f, p0=[1-min(f), mean, sig])
     except RuntimeError:
-        return -1
+        return -1, -1, -1
 
 #    w_plot = np.linspace(w[0], w[-1], 100)
 #    plt.step(w_plot, Gauss(w_plot, popt[0], popt[1], popt[2]))
@@ -401,12 +401,19 @@ def determine_resolving_power(w, f, deg=2, band=0, specres=28000, w2=[],
             popt2, pcov2 = curve_fit(Gauss2, w, f, p0=[1-min(f), 1.0, sig,
                                                        popt[1]])
             R = float(popt2[3] / (2.355 * popt2[2]))
+            sig2 = popt2[2]
+            sig2_err = np.sqrt(np.diag(pcov))[2]
         except RuntimeError:
             R = -1.0
+            sig2 = -1.0
+            sig2_err = -1.0
+
     else:
         R = -1.0
+        sig2 = -1.0
+        sig2_err = -1.0
 
-    return R
+    return R, sig2, sig2_err
 
 
 def determine_radvel(ref_flux, tar_flux, pixel, rv_weight, mpix=0,
@@ -642,7 +649,7 @@ def prepare_reference(wave_r_old, flux_r_old, res_power,
 
 
 def lineup(f_ref, f_tar, e_ref, e_tar, band=0, low_perc=False,
-           rv_weight=[0]):
+           rv_weight=[0], Li_plot=False):
     """Lines up the two spectra by the amount of light absorpted in the
     area around the line.
     Parameters
@@ -677,6 +684,12 @@ def lineup(f_ref, f_tar, e_ref, e_tar, band=0, low_perc=False,
             to line it up with the reference.
 
     """
+    if Li_plot is True:
+        plt.step(np.linspace(0, len(f_ref)-1, len(f_ref)), f_ref)
+        plt.step(np.linspace(0, len(f_tar)-1, len(f_tar)), f_tar)
+        plt.axvline(len(f_ref)/2)
+        plt.show()
+        plt.clf()
     i = band
     perc = 1.0
     if low_perc is True:
@@ -690,6 +703,7 @@ def lineup(f_ref, f_tar, e_ref, e_tar, band=0, low_perc=False,
     cut_value = np.sort(f_ref)[int(len(f_ref)*(1-perc))]
     f_tar = f_tar[f_ref > cut_value]
     weight = weight[f_ref > cut_value]
+#    weight = np.ones_like(weight[f_ref > cut_value])
     f_ref = f_ref[f_ref > cut_value]
 
     sum1 = sum(f_tar * weight)
@@ -699,19 +713,22 @@ def lineup(f_ref, f_tar, e_ref, e_tar, band=0, low_perc=False,
 
     raise_tar = sum(f_ref * weight) / sum1
 
+    m_flag = False
     for j in range(4):
         f_tar_new = f_tar * raise_tar
         e_tar_new = e_tar * raise_tar
+        con = f_tar_new < np.max(
+                [1.05 + e_tar_new * b_coeff[i],
+                 1.0 + e_tar_new * b_coeff2[i]])
+        if np.median(f_tar_new[con]) > 1.05 or m_flag is True:
+            con = np.bitwise_and(con, f_tar_new > np.min(
+                    [0.9 - e_tar_new * b_coeff[i],
+                     1.0 - e_tar_new * b_coeff2[i]]))
+            m_flag = True
 
-        f_ref_new = f_ref[f_tar_new < np.max(
-                [1.05 + e_tar_new * b_coeff[i],
-                 1.0 + e_tar_new * b_coeff2[i]])]
-        weight_new = weight[f_tar_new < np.max(
-                [1.05 + e_tar_new * b_coeff[i],
-                 1.0 + e_tar_new * b_coeff2[i]])]
-        f_tar_new = f_tar_new[f_tar_new < np.max(
-                [1.05 + e_tar_new * b_coeff[i],
-                 1.0 + e_tar_new * b_coeff2[i]])]
+        f_ref_new = f_ref[con]
+        weight_new = weight[con]
+        f_tar_new = f_tar_new[con]
 
         raise_tar = raise_tar * sum(f_ref_new * weight_new) / \
             sum(f_tar_new * weight_new)
