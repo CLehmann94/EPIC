@@ -28,7 +28,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from EPIC_functions import Gauss, parabel, hypersurface, hypersurfacelstsq, \
                            hypererr, gauss_function, linear_SNR, read_sky, \
                            find_nearest_idx, pivot_to_ap, renorm, dTemp_lin, \
-                           dlogg_lin, dMetal
+                           dlogg_lin, dMetal, A_Li, A_Li_err
 from EPIC_scripts import addSN, addSN_simple, add_weight, air2vacESO, \
                       center_line, determine_radvel, prepare_reference_rv, \
                       prepare_reference, lineup, line_prep_plot, measure_EW, \
@@ -99,6 +99,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     errcount = 0
     exptime = 0
     j = 0
+    Li_EW = 0.0
     line_numb = -1
     logg_base = 0
     lspa_vel = 400
@@ -112,9 +113,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     res_power_reduction = 0.0
     rvtoll = 800
     rnum = 0
-    sig_diff = 0.0
-    sig_ref = 0.0
-    sig_tar = 0.0
     SkyN = 0.11
     SNR_add = [1000, 1000, 1000, 1000]
     tnum = 0
@@ -133,6 +131,10 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
 #   Arrays
     ap_corr = []
     boun = [[4713, 4901], [5649, 5872], [6478, 6738], [7585, 7885]]
+    br_ref = np.array([])
+    br_ref_err = np.array([])
+    br_tar = np.array([])
+    br_tar_err = np.array([])
     center_w = [4807.0, 5760.5, 6607.0, 7735.0]
     corr_fun = []
     corr_rv = []
@@ -153,6 +155,8 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     EWT_sig = []
     Li_print = []
     line_rvshift = np.array([])
+    P_Li = [0.041075471767, -15.046087941260, 0.752758385865, 0.487879597891,
+            -205.54623003226]
     R_weight = np.array([])
     R_weighted_average = np.array([])
     Ref_spec = []
@@ -162,8 +166,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     rspec = []
     rv_correct_wav = [0, 0, 0, 0]
     rv_flag = ['F', 'F', 'F', 'F']
-    sig_weight = np.array([])
-    sig_weighted = np.array([])
     sky_fits = []
     suc_ele = []
     suc_ion = []
@@ -758,34 +760,32 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                 twav[0], twav[-1] - line]) < lspa_wav:
             continue
 
-        con = np.bitwise_and(line - lwid_wav*2 < rwav2,
-                             rwav2 < line + lwid_wav*2)
-        con2 = np.bitwise_and(line - lwid_wav*2 < twav,
-                              twav < line + lwid_wav*2)
+        con = np.bitwise_and(line - lwid_wav*2.5 < rwav2,
+                             rwav2 < line + lwid_wav*2.5)
+        con2 = np.bitwise_and(line - lwid_wav*2.5 < twav,
+                              twav < line + lwid_wav*2.5)
 
         R_ref, R_tar = 0, 0
         if resolv_switch is True:
-            R_ref, sig_ref, sig_ref_err = determine_resolving_power(
+            R_ref, broad_ref, broad_ref_err = determine_resolving_power(
                     rwav2[con], rflux2[con])
-            R_tar, sig_tar, sig_tar_err = determine_resolving_power(
+            R_tar, broad_tar, broad_tar_err = determine_resolving_power(
                     twav[con2], tflux[con2])
             if R_ref > 18000 and R_tar > 1000:
                 R_weighted_average = np.append(R_weighted_average,
                                                (R_tar - R_ref))
                 R_weight = np.append(R_weight, R_ref)
-
-                sig_tar_err = np.sqrt(np.square(sig_tar_err / sig_ref) +
-                                      np.square(sig_ref_err * sig_tar /
-                                                np.square(sig_ref)))
-                sig_weighted = np.append(sig_weighted, (sig_tar / sig_ref))
-                sig_weight = np.append(sig_weight, 1 /
-                                       np.square(sig_tar_err))
+                br_ref = np.append(br_ref, broad_ref)
+                br_ref_err = np.append(br_ref_err, broad_ref_err)
+                br_tar = np.append(br_tar, broad_tar)
+                br_tar_err = np.append(br_tar_err, broad_tar_err)
                 with open(Resolv_out, 'a+') as res_out:
                     res_out.write(str(ele) + '    ' + str(line) + '    ' +
                                   str(R_ref) + '    ' + str(R_tar) + '    ' +
-                                  str(sig_ref) + '    ' + str(sig_ref_err) +
-                                  '    ' + str(sig_tar) + '    ' +
-                                  str(sig_tar_err) + '\n')
+                                  str(broad_ref) + '    ' +
+                                  str(broad_ref_err) + '    ' +
+                                  str(broad_tar) + '    ' +
+                                  str(broad_tar_err) + '\n')
 
 # Giving minimal errors
         terr = np.where([e != e for e in terr], -1, terr)
@@ -1022,11 +1022,10 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
 
         if ele == 'Li':
             Li_print = [rEW, rEW_sig, tEW, tEW_sig, wavshift2_pix]
+            Li_EW = rEW - tEW
+            Li_dEW = np.sqrt(np.square(rEW_sig) + np.square(tEW_sig) + 4)
     if len(R_weight) != 0 and len(R_weighted_average) != 0:
         res_power_reduction = np.sum(R_weighted_average) / np.sum(R_weight)
-        sig_diff = np.sum(np.multiply(sig_weighted, sig_weight)) / \
-            np.sum(sig_weight)
-        sig_diff_err = np.sqrt(1 / np.sum(sig_weight))
     else:
         res_power_reduction = 0
 
@@ -1223,6 +1222,15 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                               + '{:>11.4f} {:>11.4f}\n').format(
                               out_name, Li_print[0], Li_print[1], Li_print[2],
                               Li_print[3], Li_print[4]))
+            Li_ab = A_Li(P_Li[0], P_Li[1], P_Li[2], P_Li[3], P_Li[4],
+                         lstsq[0], Li_EW)
+            Li_ab_err = A_Li_err(P_Li[0], P_Li[2], P_Li[4], lstsq[0],
+                                 Li_EW, Li_dEW)
+            if resolv_switch is True and len(br_ref) > 0:
+                br_av_ref = np.average(br_ref, weights=1/np.square(br_ref_err))
+                br_av_tar = np.average(br_tar, weights=1/np.square(br_tar_err))
+                br_av_ref_err = np.sqrt(1 / np.sum(1 / np.square(br_ref_err)))
+                br_av_tar_err = np.sqrt(1 / np.sum(1 / np.square(br_tar_err)))
 
             if casali_corr is True:
                 T_cas = dTemp_lin(lstsq, Teff_corr[0], Teff_corr[1],
@@ -1244,17 +1252,20 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                 SP_header = True
             with open('stellar_params.dat', 'a') as out:
                 if SP_header is True:
-                    out.write('# ID                     T_eff        dT_eff' +
+                    out.write('# ID                 T_eff        dT_eff' +
                               '     logg       dlogg      Fe_H        dFe_H' +
-                              '       RV          Res_power_red sig_diff   ' +
-                              ' sig_diff_err  RV_flag     \n')
+                              '      RV            RV_flag  Li_ab       ' +
+                              'Li_ab_err   br_ref      br_ref_sig  br_tar ' +
+                              '     br_tar_sig\n')
                 out.write(('{:>5s} {:>11.1f} {:>11.1f} {:>11.4f}'
-                          + '{:>11.4f} {:>11.5f} {:>11.5f} {:>11.5f} {:>11.5f}'
-                          + ' {:>13.5f} {:>13.5f} {:>9s}\n'
+                          + '{:>11.4f} {:>11.5f} {:>11.5f} {:>11.5f} {:>9s}'
+                          + ' {:>11.5f} {:>11.5f} {:>11.5f} {:>11.5f} '
+                          + '{:>11.5f} {:>11.5f}\n'
                            ).format(out_name, lstsq[0],
                           lstsq_sig[0], lstsq[1], lstsq_sig[1], lstsq[2],
-                          lstsq_sig[2], rv_weighted_av, res_power_reduction,
-                          sig_diff, sig_diff_err, rv_flag_tot))
+                          lstsq_sig[2], rv_weighted_av, rv_flag_tot,
+                          Li_ab, Li_ab_err, br_av_ref, br_av_ref_err,
+                          br_av_tar, br_av_tar_err))
     return 0
 
 

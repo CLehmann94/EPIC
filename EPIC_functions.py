@@ -11,6 +11,14 @@ import math
 import numpy as np
 
 
+def A_Li(a, b1, b2, b3, c, T_eff, EW_Li):
+    return np.log((EW_Li - a*T_eff - c) / b1) / b2 + b3
+
+
+def A_Li_err(a, b2, c, T_eff, EW_Li, EW_Li_err):
+    return EW_Li_err / np.abs(b2 * (EW_Li - a*T_eff - c))
+
+
 def dMetal(data, a, b, c1, c2, d):
     T, logg, M = data[0] - 5772, data[1] - 4.438, data[2] - 0.0000
     return a*T + b*logg + c1*M + c2*M*M + d

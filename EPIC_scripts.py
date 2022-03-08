@@ -378,6 +378,8 @@ def determine_resolving_power(w, f, deg=2, band=0, specres=28000, w2=[],
     """
 #   calculate the sigma of the band
     boun = [[4715, 4900], [5649, 5873], [6478, 6737], [7585, 7885]]
+    c = const.c.to('km/s')
+    sig_final = 0
 
     sig = (boun[band][1] + boun[band][0]) / (2.0 * 2.355 * specres)
 
@@ -388,32 +390,41 @@ def determine_resolving_power(w, f, deg=2, band=0, specres=28000, w2=[],
     except RuntimeError:
         return -1, -1, -1
 
-#    w_plot = np.linspace(w[0], w[-1], 100)
-#    plt.step(w_plot, Gauss(w_plot, popt[0], popt[1], popt[2]))
-#    plt.step(w, f)
-#    plt.show()
-#    plt.clf()
+    w_plot = np.linspace(w[0], w[-1], 100)
+    plt.step(w_plot, Gauss(w_plot, popt[0], popt[1], popt[2]))
+    plt.step(w, f)
+    plt.show()
+    plt.clf()
 
-    if 0.2 < popt[0] and popt[0] < 0.6:
-        try:
-            def Gauss2(x, a, b, sigma, c):
-                return b - a * np.exp(-(x - c)**2 / (2 * sigma**2))
-            popt2, pcov2 = curve_fit(Gauss2, w, f, p0=[1-min(f), 1.0, sig,
-                                                       popt[1]])
-            R = float(popt2[3] / (2.355 * popt2[2]))
-            sig2 = popt2[2]
-            sig2_err = np.sqrt(np.diag(pcov))[2]
-        except RuntimeError:
-            R = -1.0
-            sig2 = -1.0
-            sig2_err = -1.0
-
+    if 0.1 < popt[0] and popt[0] < 0.7:
+        sig2 = popt[2]
+        sig2_err = np.sqrt(np.diag(pcov))[2]
+        R = float(popt[1] / (2.355 * popt[2]))
+#        try:
+#            def Gauss2(x, a, b, sigma, c):
+#                return b - a * np.exp(-(x - c)**2 / (2 * sigma**2))
+#            popt2, pcov2 = curve_fit(Gauss2, w, f, p0=[1-min(f), 1.0, sig,
+#                                                       popt[1]])
+#            R = float(popt2[3] / (2.355 * popt2[2]))
+#        except RuntimeError:
+#            return -1, -1, -1
     else:
-        R = -1.0
-        sig2 = -1.0
-        sig2_err = -1.0
+        return -1, -1, -1
+    sig_b = np.square(sig2) - np.square(sig)
+    if sig_b < 0:
+        sig_abs = np.sqrt(np.abs(sig_b))
+        sig_err = np.sqrt(np.square(sig2 * sig2_err * c.value /
+                                    (popt[1] * sig_abs)) +
+                          np.square(sig_abs * c.value / popt[1]**2))
+        sig_final = 0
+    elif sig_b >= 0:
+        sig_b2 = np.sqrt(sig_b)
+        sig_err = np.sqrt(np.square(sig2 * sig2_err * c.value /
+                                    (popt[1] * sig_b2)) +
+                          np.square(sig_b2 * c.value / popt[1]**2))
+        sig_final = sig_b2 * c.value / popt[1]
 
-    return R, sig2, sig2_err
+    return R, sig_final, sig_err
 
 
 def determine_radvel(ref_flux, tar_flux, pixel, rv_weight, mpix=0,
