@@ -809,8 +809,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
         if traise_new is False:
             continue
         traise = np.append(traise, traise_new)
-#        print(np.average(traise))
-#
+
         tflux = np.multiply(tflux, traise[-1])
         terr = np.multiply(terr, traise[-1])
 
