@@ -1243,7 +1243,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             Li_ab_err = A_Li_err(P_Li[0], P_Li[2], P_Li[4], lstsq[0],
                                  lstsq_sig[0], Li_EW, Li_dEW)
             Li_EW_sign = Li_EW_tonly / Li_dEW
-            print(Li_EW_tonly, Li_dEW, Li_EW_sign)
             if resolv_switch is True and len(br_ref) > 0:
                 br_av_ref = np.average(br_ref, weights=1/np.square(br_ref_err))
                 br_av_tar = np.average(br_tar, weights=1/np.square(br_tar_err))
