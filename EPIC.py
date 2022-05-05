@@ -34,7 +34,7 @@ from EPIC_scripts import addSN, addSN_simple, add_weight, air2vacESO, \
                       prepare_reference, lineup, line_prep_plot, measure_EW, \
                       prepare_target_wavelegnth, readlinelistw, \
                       read_ap_correct, combine_ap, rHERMES, r_resolving_map, \
-                      determine_resolving_power
+                      determine_resolving_power, determine_resolving_power2
 from EW_only import EW_only
 
 
@@ -88,10 +88,11 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             if argv[i] == '--help':
                 helpmessage(PROGNAME)
 
-
 #   numbers setup
     ap_number = [0]
     ap_weight = [1]
+    br_av_ref, br_av_ref_err, br_av_tar, br_av_tar_err = 0, 0, 0, 0
+    br_av_ref2, br_av_ref_err2, br_av_tar2, br_av_tar_err2 = 0, 0, 0, 0
     c = const.c.to('km/s')
     count = 0
     count2 = 0
@@ -99,6 +100,8 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     errcount = 0
     exptime = 0
     j = 0
+    Li_ab, Li_ab_err = 0, 0
+    Li_dEW = 0.0
     Li_EW = 0.0
     line_numb = -1
     logg_base = 0
@@ -110,7 +113,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     M_base = 0
     npix_HER = 4096
     Res_pow = 28000
-    res_power_reduction = 0.0
     rvtoll = 800
     rnum = 0
     SkyN = 0.11
@@ -135,6 +137,10 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     br_ref_err = np.array([])
     br_tar = np.array([])
     br_tar_err = np.array([])
+    br_ref2 = np.array([])
+    br_ref_err2 = np.array([])
+    br_tar2 = np.array([])
+    br_tar_err2 = np.array([])
     center_w = [4807.0, 5760.5, 6607.0, 7735.0]
     corr_fun = []
     corr_rv = []
@@ -771,7 +777,11 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                     rwav2[con], rflux2[con])
             R_tar, broad_tar, broad_tar_err = determine_resolving_power(
                     twav[con2], tflux[con2])
-            if R_ref > 18000 and R_tar > 1000:
+            _, broad_ref2, broad_ref_err2 = determine_resolving_power2(
+                    rwav2[con], rflux2[con])
+            R_tar2, broad_tar2, broad_tar_err2 = determine_resolving_power2(
+                    twav[con2], tflux[con2])
+            if R_ref > 18000 and R_tar > 1000 and R_tar2 > 1000:
                 R_weighted_average = np.append(R_weighted_average,
                                                (R_tar - R_ref))
                 R_weight = np.append(R_weight, R_ref)
@@ -779,6 +789,10 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                 br_ref_err = np.append(br_ref_err, broad_ref_err)
                 br_tar = np.append(br_tar, broad_tar)
                 br_tar_err = np.append(br_tar_err, broad_tar_err)
+                br_ref2 = np.append(br_ref2, broad_ref2)
+                br_ref_err2 = np.append(br_ref_err2, broad_ref_err2)
+                br_tar2 = np.append(br_tar2, broad_tar2)
+                br_tar_err2 = np.append(br_tar_err2, broad_tar_err2)
                 with open(Resolv_out, 'a+') as res_out:
                     res_out.write(str(ele) + '    ' + str(line) + '    ' +
                                   str(R_ref) + '    ' + str(R_tar) + '    ' +
@@ -845,15 +859,15 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             plt.show()
             plt.clf()
 
-#        if plot_switch3 is True and j == 40:
+#        if plot_switch3 is True and nline>5750:
         if plot_switch3 is True and ele == 'Li':
             pdf = matplotlib.backends.backend_pdf.PdfPages("Line_measure.pdf")
             fig, p = plt.subplots(1, 1)
             fig.set_figheight(6)
             fig.set_figwidth(11)
 
-            p.step(rwav2, rflux2, label='Ref spectrum')
-            p.step(twav, tflux, label='Tar spectrum')
+            p.step(rwav2, rflux2, label='Sun')
+            p.step(twav, tflux, label='Twin candidate')
             p.axhline(1, color='black', ls='--')
             p.axvline(nline - lw2_wav, color='blue', ls='--')
             p.axvline(nline + lw2_wav, color='blue', ls='--')
@@ -862,13 +876,16 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             p.legend(loc='lower right')
             p.set_xlabel(r'\LARGE Wavelength [\AA]')
             p.set_ylabel(r'\LARGE Normalized Flux')
-            p.set_ylim(0.7, 1.1)
+            p.set_ylim(0.4, 1.1)
 
             p.xaxis.set_minor_locator(AutoMinorLocator())
             p.yaxis.set_minor_locator(AutoMinorLocator())
             p.set_rasterization_zorder(-20)
+            fig.subplots_adjust(left=0.072, right=0.985, bottom=0.132,
+                                top=0.975, wspace=0.0, hspace=0.0)
+
             plt.show()
-            pdf.savefig(fig)
+#            pdf.savefig(fig)
             plt.clf()
             pdf.close()
 
@@ -1002,6 +1019,15 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                        + "{0:.4f}".format(tEW_sig).rjust(7, ' ') + '    '
                        + "{0:.4f}".format(rEW - tEW) + '    '
                        + "{0:.4f}".format(EW_full_err) + "\n")
+
+        if ele == 'Li':
+            Li_print = [rEW, rEW_sig, tEW, tEW_sig, wavshift2_pix]
+            Li_EW = rEW - tEW
+            Li_EW_tonly = tEW
+            Li_dEW = np.sqrt(np.square(rEW_sig) + np.square(tEW_sig) + 4)
+
+        if np.abs(rEW - tEW) > 50:
+            continue
         suc_ele.append(ele)
         suc_ion.append(io)
         suc_line.append(line)
@@ -1018,15 +1044,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             suc_line2.append(line)
             Resolve_R.append(R_ref)
         j = j+1
-
-        if ele == 'Li':
-            Li_print = [rEW, rEW_sig, tEW, tEW_sig, wavshift2_pix]
-            Li_EW = rEW - tEW
-            Li_dEW = np.sqrt(np.square(rEW_sig) + np.square(tEW_sig) + 4)
-    if len(R_weight) != 0 and len(R_weighted_average) != 0:
-        res_power_reduction = np.sum(R_weighted_average) / np.sum(R_weight)
-    else:
-        res_power_reduction = 0
 
     rv_weight2 = np.square(EWTar)
     if np.sum(rv_weight2) <= 0:
@@ -1224,12 +1241,22 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             Li_ab = A_Li(P_Li[0], P_Li[1], P_Li[2], P_Li[3], P_Li[4],
                          lstsq[0], Li_EW)
             Li_ab_err = A_Li_err(P_Li[0], P_Li[2], P_Li[4], lstsq[0],
-                                 Li_EW, Li_dEW)
+                                 lstsq_sig[0], Li_EW, Li_dEW)
+            Li_EW_sign = Li_EW_tonly / Li_dEW
+            print(Li_EW_tonly, Li_dEW, Li_EW_sign)
             if resolv_switch is True and len(br_ref) > 0:
                 br_av_ref = np.average(br_ref, weights=1/np.square(br_ref_err))
                 br_av_tar = np.average(br_tar, weights=1/np.square(br_tar_err))
                 br_av_ref_err = np.sqrt(1 / np.sum(1 / np.square(br_ref_err)))
                 br_av_tar_err = np.sqrt(1 / np.sum(1 / np.square(br_tar_err)))
+                br_av_ref2 = np.average(
+                        br_ref2, weights=1/np.square(br_ref_err2))
+                br_av_tar2 = np.average(
+                        br_tar2, weights=1/np.square(br_tar_err2))
+                br_av_ref_err2 = np.sqrt(
+                        1 / np.sum(1 / np.square(br_ref_err2)))
+                br_av_tar_err2 = np.sqrt(
+                        1 / np.sum(1 / np.square(br_tar_err2)))
 
             if casali_corr is True:
                 T_cas = dTemp_lin(lstsq, Teff_corr[0], Teff_corr[1],
@@ -1253,18 +1280,22 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                 if SP_header is True:
                     out.write('# ID                 T_eff        dT_eff' +
                               '     logg       dlogg      Fe_H        dFe_H' +
-                              '      RV            RV_flag  Li_ab       ' +
-                              'Li_ab_err   br_ref      br_ref_sig  br_tar ' +
-                              '     br_tar_sig\n')
+                              '      RV            RV_flag  A_Li        ' +
+                              'A_Li_err    Li_EW_significance    br_ref   ' +
+                              '   br_ref_sig  br_tar ' +
+                              '     br_tar_sig   br_ref2     br_ref_sig2 ' +
+                              'br_tar2     br_tar_sig2\n')
                 out.write(('{:>5s} {:>11.1f} {:>11.1f} {:>11.4f}'
                           + '{:>11.4f} {:>11.5f} {:>11.5f} {:>11.5f} {:>9s}'
                           + ' {:>11.5f} {:>11.5f} {:>11.5f} {:>11.5f} '
-                          + '{:>11.5f} {:>11.5f}\n'
+                          + ' {:>11.5f} {:>11.5f} {:>11.5f} {:>11.5f} '
+                          + '{:>11.5f} {:>11.5f} {:>11.5f}\n'
                            ).format(out_name, lstsq[0],
                           lstsq_sig[0], lstsq[1], lstsq_sig[1], lstsq[2],
                           lstsq_sig[2], rv_weighted_av, rv_flag_tot,
-                          Li_ab, Li_ab_err, br_av_ref, br_av_ref_err,
-                          br_av_tar, br_av_tar_err))
+                          Li_ab, Li_ab_err, Li_EW_sign, br_av_ref, br_av_ref_err,
+                          br_av_tar, br_av_tar_err, br_av_ref2, br_av_ref_err2,
+                          br_av_tar2, br_av_tar_err2))
     return 0
 
 

@@ -19,6 +19,8 @@ import scipy.stats as stats
 from spectres import spectres
 from tqdm import tqdm
 import unyt as u
+import warnings
+
 
 
 def add_weight(line_pos, line_wid, w, err, pix_wid):
@@ -352,8 +354,8 @@ def center_line(w, f):
     return w[a] + (w_npix * w_pix)
 
 
-def Gauss(x, a, x0, sigma):
-    return 1 - a * np.exp(-(x - x0)**2 / (2 * sigma**2))
+def Gauss(x, a, x0, sigma, sigma0):
+    return 1 - a * np.exp(-(x - x0)**2 / (2 * (sigma0**2 + sigma**2)))
 
 
 def determine_resolving_power(w, f, deg=2, band=0, specres=28000, w2=[],
@@ -385,31 +387,33 @@ def determine_resolving_power(w, f, deg=2, band=0, specres=28000, w2=[],
 
 #   Fit a Gaussian to the line
     mean = sum(w * f) / sum(f)
+
+    warnings.filterwarnings("ignore", "Covariance of the parameters could not"
+                            + " be estimated")
+
     try:
-        popt, pcov = curve_fit(Gauss, w, f, p0=[1-min(f), mean, sig])
+        popt, pcov = curve_fit(lambda x, a, x0, sigma:
+                               Gauss(x, a, x0, sigma, 0), w, f,
+                               p0=[1-min(f), mean, sig])
     except RuntimeError:
         return -1, -1, -1
 
-    w_plot = np.linspace(w[0], w[-1], 100)
-    plt.step(w_plot, Gauss(w_plot, popt[0], popt[1], popt[2]))
-    plt.step(w, f)
-    plt.show()
-    plt.clf()
+#    w_plot = np.linspace(w[0], w[-1], 100)
+#    plt.step(w_plot, Gauss(w_plot, popt[0], popt[1], popt[2]))
+#    plt.step(w, f)
+#    plt.show()
+#    plt.clf()
 
     if 0.1 < popt[0] and popt[0] < 0.7:
         sig2 = popt[2]
-        sig2_err = np.sqrt(np.diag(pcov))[2]
+        if np.diag(pcov)[2] > 0:
+            sig2_err = np.sqrt(np.diag(pcov)[2])
+        else:
+            return -1, -1, -1
         R = float(popt[1] / (2.355 * popt[2]))
-#        try:
-#            def Gauss2(x, a, b, sigma, c):
-#                return b - a * np.exp(-(x - c)**2 / (2 * sigma**2))
-#            popt2, pcov2 = curve_fit(Gauss2, w, f, p0=[1-min(f), 1.0, sig,
-#                                                       popt[1]])
-#            R = float(popt2[3] / (2.355 * popt2[2]))
-#        except RuntimeError:
-#            return -1, -1, -1
     else:
         return -1, -1, -1
+
     sig_b = np.square(sig2) - np.square(sig)
     if sig_b < 0:
         sig_abs = np.sqrt(np.abs(sig_b))
@@ -423,6 +427,68 @@ def determine_resolving_power(w, f, deg=2, band=0, specres=28000, w2=[],
                                     (popt[1] * sig_b2)) +
                           np.square(sig_b2 * c.value / popt[1]**2))
         sig_final = sig_b2 * c.value / popt[1]
+
+    return R, sig_final, sig_err
+
+
+def determine_resolving_power2(w, f, deg=2, band=0, specres=28000, w2=[],
+                               f2=[]):
+    """Determines the resolving power of an absorption feature.
+    Parameters
+    ----------
+        w: Array like
+            A subarray with wavelenghts within a certain line.
+        f: Array like
+            A subarray with flux values within a certain line.
+        deg: int
+            The degree of the fitting polynomial.
+        band: int
+            The band in which the line is within the HERMES spectrograph
+
+    Returns
+    -------
+    A variable:
+        x_min : float
+            The wavelength value of the line after centering on the minimum
+    """
+#   calculate the sigma of the band
+    boun = [[4715, 4900], [5649, 5873], [6478, 6737], [7585, 7885]]
+    c = const.c.to('km/s')
+    sig_final = 0
+
+    sig = (boun[band][1] + boun[band][0]) / (2.0 * 2.355 * specres)
+
+#   Fit a Gaussian to the line
+    mean = sum(w * f) / sum(f)
+
+    warnings.filterwarnings("ignore", "Covariance of the parameters could not"
+                            + " be estimated")
+
+    try:
+        popt, pcov = curve_fit(lambda x, a, x0, sigma:
+                               Gauss(x, a, x0, sigma, sig), w, f,
+                               p0=[1-min(f), mean, 4])
+    except RuntimeError:
+        return -1, -1, -1
+
+    if 0.1 < popt[0] and popt[0] < 0.7:
+        sig_b = np.abs(popt[2])
+        if np.diag(pcov)[2] > 0:
+            sig_b_err = np.sqrt(np.diag(pcov)[2])
+        else:
+            return -1, -1, -1
+        R = float(popt[1] / (2.355 * np.abs(popt[2])))
+    else:
+        return -1, -1, -1
+
+    w_plot = np.linspace(w[0], w[-1], 100)
+#    plt.step(w_plot, Gauss(w_plot, popt[0], popt[1], popt[2], sig))
+#    plt.step(w, f)
+#    plt.show()
+#    plt.clf()
+
+    sig_final = sig_b * c.value / popt[1]
+    sig_err = sig_b_err * c.value / popt[1]
 
     return R, sig_final, sig_err
 

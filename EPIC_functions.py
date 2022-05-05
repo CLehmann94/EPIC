@@ -12,11 +12,16 @@ import numpy as np
 
 
 def A_Li(a, b1, b2, b3, c, T_eff, EW_Li):
-    return np.log((EW_Li - a*T_eff - c) / b1) / b2 + b3
+    if ((EW_Li - a*T_eff - c) / b1) > 0:
+        return np.log((EW_Li - a*T_eff - c) / b1) / b2 + b3
+    else:
+        return -3.0
 
 
-def A_Li_err(a, b2, c, T_eff, EW_Li, EW_Li_err):
-    return EW_Li_err / np.abs(b2 * (EW_Li - a*T_eff - c))
+def A_Li_err(a, b2, c, T_eff, T_eff_err, EW_Li, EW_Li_err):
+    EW_part = EW_Li_err / np.abs(b2 * (EW_Li - a*T_eff - c))
+    T_eff_part = T_eff_err * a / np.abs(b2 * (EW_Li - a*T_eff - c))
+    return np.sqrt(np.square(EW_part) + np.square(T_eff_part))
 
 
 def dMetal(data, a, b, c1, c2, d):
