@@ -431,8 +431,9 @@ def determine_resolving_power(w, f, deg=2, band=0, specres=28000, w2=[],
     return R, sig_final, sig_err
 
 
-def determine_resolving_power2(w, f, deg=2, band=0, specres=28000, w2=[],
-                               f2=[]):
+def determine_resolving_power2(wave, flux, wcon=[], ref_w=[], ref_f=[],
+                               rcon=[], deg=2, band=0, specres=28000,
+                               w2=[], f2=[]):
     """Determines the resolving power of an absorption feature.
     Parameters
     ----------
@@ -451,6 +452,14 @@ def determine_resolving_power2(w, f, deg=2, band=0, specres=28000, w2=[],
         x_min : float
             The wavelength value of the line after centering on the minimum
     """
+    if len(wcon) == len(wave):
+        w = wave[wcon]
+        f = flux[wcon]
+    else:
+        w = wave
+        f = flux
+    line_centre = (w[-1] + w[0]) / 2
+
 #   calculate the sigma of the band
     boun = [[4715, 4900], [5649, 5873], [6478, 6737], [7585, 7885]]
     c = const.c.to('km/s')
@@ -481,11 +490,31 @@ def determine_resolving_power2(w, f, deg=2, band=0, specres=28000, w2=[],
     else:
         return -1, -1, -1
 
-    w_plot = np.linspace(w[0], w[-1], 100)
-#    plt.step(w_plot, Gauss(w_plot, popt[0], popt[1], popt[2], sig))
-#    plt.step(w, f)
-#    plt.show()
-#    plt.clf()
+#    if len(ref_w) > 0 and line_centre > 5689 and line_centre < 5690:
+#        try:
+#            popt2, pcov2 = curve_fit(lambda x, a, x0, sigma:
+#                                     Gauss(x, a, x0, sigma, sig), ref_w[rcon],
+#                                     ref_f[rcon], p0=[1-min(f), mean, 4])
+#        except RuntimeError:
+#            return -1, -1, -1
+#
+#        w_plot = np.linspace(w[0], w[-1], 100)
+#        plt.step(wave, flux, label="Candidate", where="mid", color="b")
+#        plt.step(ref_w, ref_f, label="Solar", where="mid", color="r")
+#        plt.plot(w_plot, Gauss(w_plot, popt[0], popt[1], popt[2], sig),
+#                 color="b", label="Can. fit", ls="--")
+#        plt.plot(w_plot, Gauss(w_plot, popt2[0], popt2[1], popt2[2], sig),
+#                 color="r", label="Sol. fit", ls="--")
+#        plt.xlim(line_centre - 1.5, line_centre + 1.5)
+#        plt.ylim(min(ref_f)*0.98, max(ref_f)*1.03)
+##        plt.legend(loc="lower right")
+#        plt.xlabel(r"wavelength [\AA]")
+#        plt.ylabel("normalised flux")
+#        plt.subplots_adjust(left=0.1, right=0.99, bottom=0.15, top=0.99,
+#                        wspace=0.0, hspace=0.3)
+#
+#        plt.show()
+#        plt.clf()
 
     sig_final = sig_b * c.value / popt[1]
     sig_err = sig_b_err * c.value / popt[1]
@@ -1287,7 +1316,7 @@ def rHERMES(FITSfile, datahdu=0, SN=False, e_hdu=1, plot_sky=False):
                 result['SNR'] = 1000
 
             if plot_sky is True:
-                print(np.subtract(sky_f, unnorm_f))
+#                print(np.subtract(sky_f, unnorm_f))
                 fig, ax = plt.subplots(nrows=1, ncols=1)
 
                 fig.set_size_inches(8.5, 4.5)

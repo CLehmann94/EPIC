@@ -1,0 +1,31 @@
+#Element	selected number (all)
+AlI		4
+BaII		2
+CI		1
+CaI		5 (7)
+CoI 		2
+CrI		11
+FeI 		41 (45)
+FeII		2 (3)
+KI		0 (1)
+LaII		0 (1)
+LiI		1 (2)
+MgI 		2 (3)
+MnI		2
+MoI		0 (1)
+NaI		3
+Ni1		18
+OI		3
+RbI		1
+ScI		2
+ScII		5
+SiI		9 (10)
+SmII		0 (1)
+TiI		11 (12)
+TiII		7
+VI		5 (6)
+YII		2 (3)
+ZnI 		2
+UL 		32
+
+alpha		37

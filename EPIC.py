@@ -28,7 +28,8 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from EPIC_functions import Gauss, parabel, hypersurface, hypersurfacelstsq, \
                            hypererr, gauss_function, linear_SNR, read_sky, \
                            find_nearest_idx, pivot_to_ap, renorm, dTemp_lin, \
-                           dlogg_lin, dMetal, A_Li, A_Li_err
+                           dlogg_lin, dMetal, A_Li, A_Li_err, \
+                           hypersurfacelstsq_metal
 from EPIC_scripts import addSN, addSN_simple, add_weight, air2vacESO, \
                       center_line, determine_radvel, prepare_reference_rv, \
                       prepare_reference, lineup, line_prep_plot, measure_EW, \
@@ -129,6 +130,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     ll = callibration + 'Master_ll'
     rm_location = [callibration + 'Resolving_maps/ccd',
                    '_piv.fits']
+    alpha_elements = ["C", "O", "Ne", "Mg", "Si", "S", "Ar", "Ca"]
 
 #   Arrays
     ap_corr = []
@@ -437,6 +439,21 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                                        tspec[i]['f'])
                 tspec[i]['e'] = results['e']
                 tspec[i]['SN'] = results['SN']
+#            if i == 0:
+#                SNR_con = np.bitwise_and(tspec[i]['w'] > 4750,
+#                                         tspec[i]['w'] < 4825)
+#            if i == 1:
+#                SNR_con = np.bitwise_and(tspec[i]['w'] > 5675,
+#                                         tspec[i]['w'] < 5750)
+#            if i == 2:
+#                SNR_con = np.bitwise_and(tspec[i]['w'] > 6600,
+#                                         tspec[i]['w'] < 6675)
+#            if i == 3:
+#                SNR_con = np.bitwise_and(tspec[i]['w'] > 7700,
+#                                         tspec[i]['w'] < 7800)
+#            SNR_simple = np.median(tspec[i]['f'][SNR_con] /
+#                                   tspec[i]['e'][SNR_con])
+#            print(i+1, SNR_simple)
 
         except FileNotFoundError:
             tspec.append(0)
@@ -466,10 +483,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                     np.round(tspec[-1]['w'][tind], 1)
                 Res_pow = resolving_power_map[-1]['R'][res_c][0]
             rv_correct_wav[i] = tspec[-1]['w'][tind]
-#            rdif = rspec[-1]['w'][1] - rspec[-1]['w'][0]
-#            rind = np.argwhere(np.bitwise_and(
-#                    rspec[-1]['w'] >= tspec[-1]['w'][tind] - rdif/2,
-#                    rspec[-1]['w'] < tspec[-1]['w'][tind] + rdif/2))[0][0]
 
             tdif = (tspec[-1]['w'][-1] - tspec[-1]['w'][0]) / \
                 (len(tspec[-1]['w']) - 1)
@@ -506,21 +519,19 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
 
             prep_flux[i] = prepare_reference(rspec[-1]['w'], rspec[-1]['f'],
                                              Res_pow, stacked=stacked)
-            if plot_switch1 is True:
-                plt.plot(tspec[-1]['w'], tspec[-1]['f'], color='red')
+            if plot_switch1 is True and i == 3:
+                plt.plot(tspec[-1]['w'], tspec[-1]['f'],
+                         color='red')
                 plt.plot(rspec[-1]['w'], rspec[-1]['f'], color='blue')
+                plt.plot(tspec[-1]['w'], tspec[-1]['e']*10,
+                         color='purple')
+                plt.ylim(0.0, 1.1)
+                plt.axhline(1.05, ls="--", color="black")
                 plt.show()
                 plt.close()
         else:
             corr_rv.append([0])
             corr_fun.append([0])
-#                plt.plot(refwave, refflux, color='blue')
-#                plt.plot(rspec[-1]['w'], rspec[-1]['f'], color='red')
-#                plt.show()
-#                plt.close()
-
-#                plt.plot(tspec[-1]['w'] + wavshift, tspec[-1]['f'] + 0.4,
-#                         color='green', linestyle='--')
 
 # Give correlation functions the same rv grid and find the maximum
     o = 0
@@ -533,8 +544,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
         corr_rv2.append(corr_rv[i])
     corr_fun_tot = np.sum(corr_fun2, 0)
     corr_rv_tot = corr_rv2[0][5:-5]
-#    plt.plot(corr_rv_tot, corr_fun_tot)
-#    plt.show()
     wavshift_ideal_rv = corr_rv_tot[np.argmax(corr_fun_tot)]
 
 # If the infrared correction failed, we need a backup rv correction
@@ -548,7 +557,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                 rv_flag[i] = 'T'
                 ideal_wavshift = (wavshift_ideal_rv - wavshift_vel[i]) * \
                     rv_correct_wav[i] / c.value
-#                print(ideal_wavshift)
                 tspec[i]['w'] = tspec[i]['w'] - ideal_wavshift
                 wavshift_vel[i] = wavshift_ideal_rv
 #        if np.abs(wavshift_vel[0] - wavshift_vel[1]) > 10 and tspec[0] != 0:
@@ -631,7 +639,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             plt.axvline(line, color='black')
         plt.show()
         plt.clf()
-#    print((tspec[2]['w'][-1] - tspec[2]['w'][0]) / len(tspec[2]['w']))
     j = 0
 #    Work on every line separatly
     for line, og_line, ele, io, ep, ap_c in zip(lines, og_lines, elem, ion,
@@ -778,9 +785,10 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             R_tar, broad_tar, broad_tar_err = determine_resolving_power(
                     twav[con2], tflux[con2])
             _, broad_ref2, broad_ref_err2 = determine_resolving_power2(
-                    rwav2[con], rflux2[con])
+                    rwav2, rflux2, wcon=con)
             R_tar2, broad_tar2, broad_tar_err2 = determine_resolving_power2(
-                    twav[con2], tflux[con2])
+                    twav, tflux, wcon=con2, ref_w=rwav2, ref_f=rflux2,
+                    rcon=con)
             if R_ref > 18000 and R_tar > 1000 and R_tar2 > 1000:
                 R_weighted_average = np.append(R_weighted_average,
                                                (R_tar - R_ref))
@@ -885,7 +893,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                                 top=0.975, wspace=0.0, hspace=0.0)
 
             plt.show()
-#            pdf.savefig(fig)
             plt.clf()
             pdf.close()
 
@@ -997,7 +1004,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             ax.axvline(nline + lw2_wav, color='red', ls='--', lw=1)
             ax.set_xlabel(r'wavelength [\AA]')
             ax.set_ylabel(r' Normalized Flux')
-#            ax.legend(loc='lower left', handlelength=1.0)
             ax.set_rasterization_zorder(-10)
             plt.show()
             ax.clear()
@@ -1071,8 +1077,14 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
 #    Calculating the Stellar Parameters using the stacked HERMES spectral data.
     if par is True:
         EW_base = np.array([], dtype='float64')
+        EW_Fe_base = np.array([], dtype='float64')
+        EW_alp_base = np.array([], dtype='float64')
         EW2 = np.array([], dtype='float64')
+        EW_Fe = np.array([], dtype='float64')
+        EW_alp = np.array([], dtype='float64')
         EW2_sig = np.array([], dtype='float64')
+        EW_Fe_sig = np.array([], dtype='float64')
+        EW_alp_sig = np.array([], dtype='float64')
         ele2 = np.array([], dtype='float64')
         io2 = np.array([], dtype='int')
         line2 = np.array([], dtype='float64')
@@ -1094,8 +1106,12 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
         offerr = np.array([], dtype='float64')
         EW_std = np.array([], dtype='float64')
         indic = np.array([], dtype='int')
+        indic_Fe = np.array([], dtype='int')
+        indic_alp = np.array([], dtype='int')
         sl = 0
         snl = 0
+        snl_Fe = 0
+        snl_alp = 0
 
         with open(lineparams) as lpar:
             for parline in lpar:
@@ -1144,17 +1160,46 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                     EW2[-1] = EW_base[-1] + EWRef[pos[0][0]] - EWTar[pos[0][0]]
             else:
                 sl += 1
+                continue
+            if ele2[i] == "Fe":
+                EW_Fe = np.append(EW_Fe, EWRef[pos[0][0]]-EWTar[pos[0][0]])
+                EW_Fe_sig = np.append(EW_Fe_sig, np.sqrt(
+                        np.square(EWT_sig[pos[0][0]]) +
+                        np.square(EWR_sig[pos[0][0]])))
+                indic_Fe = np.append(indic_Fe, i)
+                snl_Fe += 1
+                if diff is True:
+                    EW_Fe_base = np.append(EW_Fe_base,
+                                           hypersurfacelstsq(
+                                                   [a1[i], a2[i], b1[i], b2[i],
+                                                    d1[i], d2[i], com1[i],
+                                                    off[i]], T_base, logg_base,
+                                                   M_base))
+                    EW_Fe[-1] = EW_Fe_base[-1] + EWRef[pos[0][0]] - \
+                        EWTar[pos[0][0]]
+            if ele2[i] in alpha_elements:
+                EW_alp = np.append(EW_alp, EWRef[pos[0][0]]-EWTar[pos[0][0]])
+                EW_alp_sig = np.append(EW_alp_sig, np.sqrt(
+                        np.square(EWT_sig[pos[0][0]]) +
+                        np.square(EWR_sig[pos[0][0]])))
+                indic_alp = np.append(indic_alp, i)
+                snl_alp += 1
+                if diff is True:
+                    EW_alp_base = np.append(EW_alp_base,
+                                            hypersurfacelstsq(
+                                                    [a1[i], a2[i], b1[i],
+                                                     b2[i], d1[i], d2[i],
+                                                     com1[i], off[i]], T_base,
+                                                    logg_base, M_base))
+                    EW_alp[-1] = EW_alp_base[-1] + EWRef[pos[0][0]] - \
+                        EWTar[pos[0][0]]
+
         if False:
             print(len(EW2))
         initialParameters = [5750.0, 4.4, 0.1]
-#        initial_err = np.abs(np.array([5772.0, 4.438, 0.0])
-#                             - np.array(initialParameters))
-#        initial_err = initialParameters
         parabound = ([5000, 3.2, -0.8], [6500, 5.0, 0.55])
         try:
             EW_fit_sig = np.sqrt(np.square(EW2_sig) + np.square(EW_std[indic]))
-#            print(EW2_sig / EW_fit_sig)
-#            print(EW_std[indic] / EW_fit_sig)
             popt, pcov = curve_fit(hypersurfacelstsq, [a1[indic], a2[indic],
                                                        b1[indic], b2[indic],
                                                        d1[indic], d2[indic],

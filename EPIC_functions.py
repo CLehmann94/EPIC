@@ -67,6 +67,16 @@ def hypersurfacelstsq(data, x, y, z):
     return a1*x + a2*x*x + b1*y + b2*y*y + c1*z + c2*z*z + d1*z/x + e
 
 
+def hypersurfacelstsq_metal(data, z):
+    a1, a2 = data[0], data[1]
+    b1, b2 = data[2], data[3]
+    c1, c2 = data[4], data[5]
+    d1 = data[6]
+    e = data[7]
+    x, y = data[8], data[9]
+    return a1*x + a2*x*x + b1*y + b2*y*y + c1*z + c2*z*z + d1*z/x + e
+
+
 def hypererr(B, data):
     x, y, z = B[0], B[1], B[2]
     a1, a2 = data[0], data[1]
