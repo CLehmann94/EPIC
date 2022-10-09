@@ -269,7 +269,7 @@ def air2vacESO(air_wavelengths_array):
         to Angstroms internally.
     Returns
     -------
-    `unyt.unyt_array`
+    `unyt.unyt_array
         A unyt_array of wavelengths in vacuum, in the original units.
     """
 
@@ -324,10 +324,6 @@ def center_line(w, f):
             A subarray with wavelenghts within a certain line.
         f : Array like
             A subarray with flux values within a certain line.
-        deg : int
-            The degree of the fitting polynomial.
-        band : int
-            The band in which the line is within the HERMES spectrograph.
 
     Returns
     -------
@@ -490,7 +486,7 @@ def determine_resolving_power2(wave, flux, wcon=[], ref_w=[], ref_f=[],
     else:
         return -1, -1, -1
 
-#    if len(ref_w) > 0 and line_centre > 5689 and line_centre < 5690:
+#    if len(ref_w) > 0 and line_centre > 6679 and line_centre < 6681:
 #        try:
 #            popt2, pcov2 = curve_fit(lambda x, a, x0, sigma:
 #                                     Gauss(x, a, x0, sigma, sig), ref_w[rcon],
@@ -499,19 +495,22 @@ def determine_resolving_power2(wave, flux, wcon=[], ref_w=[], ref_f=[],
 #            return -1, -1, -1
 #
 #        w_plot = np.linspace(w[0], w[-1], 100)
-#        plt.step(wave, flux, label="Candidate", where="mid", color="b")
-#        plt.step(ref_w, ref_f, label="Solar", where="mid", color="r")
+#        plt.step(wave, flux, label="HERMES faint", where="mid", color="g",
+#                 alpha=0.5)
+#        plt.step(ref_w, ref_f, label="Solar reference", where="mid", color="r",
+#                 alpha=0.5)
 #        plt.plot(w_plot, Gauss(w_plot, popt[0], popt[1], popt[2], sig),
-#                 color="b", label="Can. fit", ls="--")
+#                 color="g", ls="--")
 #        plt.plot(w_plot, Gauss(w_plot, popt2[0], popt2[1], popt2[2], sig),
-#                 color="r", label="Sol. fit", ls="--")
-#        plt.xlim(line_centre - 1.5, line_centre + 1.5)
+#                 color="r", ls="--")
+#        plt.xlim(6678.8, 6681.2)
+#        plt.xticks([6679, 6680, 6681])
 #        plt.ylim(min(ref_f)*0.98, max(ref_f)*1.03)
-##        plt.legend(loc="lower right")
-#        plt.xlabel(r"wavelength [\AA]")
-#        plt.ylabel("normalised flux")
-#        plt.subplots_adjust(left=0.1, right=0.99, bottom=0.15, top=0.99,
-#                        wspace=0.0, hspace=0.3)
+#        plt.legend(loc="lower right", fontsize=25)
+#        plt.xlabel(r"Wavelength [\AA]", size=33)
+#        plt.ylabel("Normalised flux", size=33)
+#        plt.subplots_adjust(left=0.1, right=0.99, bottom=0.18, top=0.99,
+#                            wspace=0.0, hspace=0.3)
 #
 #        plt.show()
 #        plt.clf()

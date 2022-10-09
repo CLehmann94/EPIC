@@ -30,14 +30,14 @@ from EPIC_functions import Gauss, parabel, hypersurface, hypersurfacelstsq, \
                            find_nearest_idx, pivot_to_ap, renorm, dTemp_lin, \
                            dlogg_lin, dMetal, A_Li, A_Li_err, \
                            hypersurfacelstsq_metal
-from EPIC_scripts import addSN, addSN_simple, add_weight, air2vacESO, \
-                      center_line, determine_radvel, prepare_reference_rv, \
-                      prepare_reference, lineup, line_prep_plot, measure_EW, \
-                      prepare_target_wavelegnth, readlinelistw, \
-                      read_ap_correct, combine_ap, rHERMES, r_resolving_map, \
-                      determine_resolving_power, determine_resolving_power2
 from EW_only import EW_only
-
+from EPIC_scripts import addSN, addSN_simple, add_weight, air2vacESO, \
+                      center_line, determine_radvel, \
+                      determine_resolving_power, determine_resolving_power2, \
+                      prepare_reference_rv, prepare_reference, lineup, \
+                      line_prep_plot, measure_EW, prepare_target_wavelegnth, \
+                      readlinelistw, read_ap_correct, combine_ap, rHERMES, \
+                      r_resolving_map
 
 # Help Message
 def helpmessage(PROGNAME):
@@ -103,7 +103,8 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     j = 0
     Li_ab, Li_ab_err = 0, 0
     Li_dEW = 0.0
-    Li_EW = 0.0
+    Li_EW = -0.00001
+    Li_EW_tonly = 0.0
     line_numb = -1
     logg_base = 0
     lspa_vel = 400
@@ -117,7 +118,6 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     rvtoll = 800
     rnum = 0
     SkyN = 0.11
-    SNR_add = [1000, 1000, 1000, 1000]
     tnum = 0
     T_base = 0
     vmag = 0
@@ -174,6 +174,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     rspec = []
     rv_correct_wav = [0, 0, 0, 0]
     rv_flag = ['F', 'F', 'F', 'F']
+    SNR_add = [1000, 1000, 1000, 1000]
     sky_fits = []
     suc_ele = []
     suc_ion = []
@@ -1034,6 +1035,8 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
 
         if np.abs(rEW - tEW) > 50:
             continue
+        if ~np.isfinite(tEW) or ~np.isfinite(tEW_sig):
+            continue
         suc_ele.append(ele)
         suc_ion.append(io)
         suc_line.append(line)
@@ -1198,6 +1201,8 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             print(len(EW2))
         initialParameters = [5750.0, 4.4, 0.1]
         parabound = ([5000, 3.2, -0.8], [6500, 5.0, 0.55])
+        if len(EW2) == 0:
+            return 1
         try:
             EW_fit_sig = np.sqrt(np.square(EW2_sig) + np.square(EW_std[indic]))
             popt, pcov = curve_fit(hypersurfacelstsq, [a1[indic], a2[indic],
@@ -1212,22 +1217,23 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             lstsq_sig = np.sqrt(np.diag(pcov))
 
         except RuntimeError:
-            EW_fit_sig = np.sqrt(np.square(EW2_sig) + hypererr(
-                    initialParameters, [a1err[indic], a2err[indic],
-                                        b1err[indic], b2err[indic],
-                                        d1err[indic], d2err[indic],
-                                        com1err[indic], offerr[indic]]))
-            popt, pcov = curve_fit(hypersurfacelstsq,
-                                   [a1[indic], a2[indic], b1[indic], b2[indic],
-                                    d1[indic], d2[indic], com1[indic],
-                                    off[indic]], EW2, p0=initialParameters,
-                                   sigma=EW_fit_sig)
+            try:
+                EW_fit_sig = np.sqrt(np.square(EW2_sig) + hypererr(
+                        initialParameters, [a1err[indic], a2err[indic],
+                                            b1err[indic], b2err[indic],
+                                            d1err[indic], d2err[indic],
+                                            com1err[indic], offerr[indic]]))
+                popt, pcov = curve_fit(hypersurfacelstsq,
+                                       [a1[indic], a2[indic], b1[indic],
+                                        b2[indic],  d1[indic], d2[indic],
+                                        com1[indic], off[indic]], EW2,
+                                       p0=initialParameters, sigma=EW_fit_sig)
 
-            lstsq = popt
-            lstsq_sig = np.sqrt(np.diag(pcov))
-        except RuntimeError:
-            lstsq = [0, 0, 0]
-            lstsq_sig = [0, 0, 0]
+                lstsq = popt
+                lstsq_sig = np.sqrt(np.diag(pcov))
+            except RuntimeError:
+                lstsq = [0, 0, 0]
+                lstsq_sig = [0, 0, 0]
 
         if reduce_out is True:
             if casali_corr is True:
@@ -1337,9 +1343,9 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                            ).format(out_name, lstsq[0],
                           lstsq_sig[0], lstsq[1], lstsq_sig[1], lstsq[2],
                           lstsq_sig[2], rv_weighted_av, rv_flag_tot,
-                          Li_ab, Li_ab_err, Li_EW_sign, br_av_ref, br_av_ref_err,
-                          br_av_tar, br_av_tar_err, br_av_ref2, br_av_ref_err2,
-                          br_av_tar2, br_av_tar_err2))
+                          Li_ab, Li_ab_err, Li_EW_sign, br_av_ref,
+                          br_av_ref_err, br_av_tar, br_av_tar_err, br_av_ref2,
+                          br_av_ref_err2, br_av_tar2, br_av_tar_err2))
     return 0
 
 
@@ -1351,16 +1357,22 @@ if __name__ == '__main__':
     SNR_stop = 91
     SNR_step = 5
     SNR_string = "--SNR_err_only"
+    no_interrupt = False
 
     a_B = [-7.9221093, 0.73295998, -0.0014636126]
     a_G = [-5.76622, 0.776005, -0.00100738]
     a_IR = [-2.95438, 0.846138, -0.000380174]
+
+    if len(argv) < 3:
+        helpmessage(argv[0].split('/')[-1])
 
     for i, arg in enumerate(argv):
         if arg.endswith('.fits') or arg.endswith('EW.dat.gz'):
             switch[i] = False
         else:
             switch[i] = True
+        if arg == "--interrupt_free":
+            no_interrupt = True
         if arg == "--SNR_grid":
             mode_string = '--alt_sig'
             for SNR_R in np.arange(SNR_start, SNR_stop, SNR_step):
@@ -1395,6 +1407,13 @@ if __name__ == '__main__':
 
     if len(argv) - len(argv[switch]) == 0:
         main_EPIC()
+    elif no_interrupt is True:
+        for spec in argv[np.bitwise_not(switch)]:
+            try:
+                main_EPIC(argv=argv[switch], spec_name=spec[:-6],
+                          ref_name=argv[switch][-1])
+            except:
+                continue
     else:
         for spec in argv[np.bitwise_not(switch)]:
             main_EPIC(argv=argv[switch], spec_name=spec[:-6],
