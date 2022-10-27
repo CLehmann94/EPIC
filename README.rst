@@ -93,4 +93,20 @@ Note that not all lines are used to measure the EW, but all lines will have an E
 
 Dependencies
 ============
-astropy, gzip, math, matplotlib, numpy, os, pathlib, scipy, spectres, sys, unyt
+astropy 3.1.2
+
+math 1.1.0
+
+matplotlib 3.2.1
+
+numpy 1.17.2
+
+os 0.1.1
+
+pathlib 2.3.5
+
+scipy 1.3.1
+
+spectres 2.0.0
+
+unyt 2.2.0
