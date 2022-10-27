@@ -1,28 +1,40 @@
-# EPIC
+|Python| |GitHub| |MNRAS|
+*EPIC*: A new code to measure stellar parameters of Sun like stars
+==================================================================
 Python Version 3.7.4 or later.
 The EPIC algorithm was created to analyse spectra from the HERMES spectrograph effectively and efficiently. It calculates equivalent witdths (EWs) for lines found within a line list (default Master_ll) and uses a sub-group of these lines in order to calculate stellar parameters (effective temperature T_eff, surface gravity log(g) and metallicity [Fe/H]). The whole process of the algorithm was explained in detail in Lehmann et al. (2022).
 
 
-Spectrum preparation:
+Preparation of spectra
+======================
 The functionality of this script is explained in Section 2.1 of Lehmann et al. (2022).
-Every spectrum that EPIC may be applied to should be prepared with the EPIC_prep.py algorithm. This algorithm can handle spectra from the GALAH DR3 (accessible at https://datacentral.org.au/services/download/) and spectra from the HARPS instrument found on the ESO database (http://archive.eso.org/wdb/wdb/adp/phase3_spectral/form). EPIC_prep.py can simply be executed via the command line, example:
+Every spectrum that EPIC may be applied to should be prepared with the EPIC_prep.py algorithm. This algorithm can handle spectra from the GALAH DR3 (accessible at https://datacentral.org.au/services/download/) and spectra from the HARPS instrument found on the ESO database (http://archive.eso.org/wdb/wdb/adp/phase3_spectral/form). 
 
-EPIC_prep.py --HERMES example_spectra/1705090042013241.fits         (for HERMES spectra. Note the --HERMES option)
-EPIC_prep.py example_spectra/ADP.2014-10-01T10\:19\:57.023.fits     (for HARPS spectra)
+Usage
+-----
+Within a Python environment with the required dependencies, EPIC_prep.py can simply be executed via the command line, example:
+
+  $ python3 EPIC_prep.py --HERMES example_spectra/1705090042013241.fits             # for HERMES spectra. Note the --HERMES option
+  $ python3 EPIC_prep.py example_spectra/ADP.2014-10-01T10\:19\:57.023.fits         # for HARPS spectra
 
 It will also accept multiple inputs, i.e.:
 
-EPIC_prep.py --HERMES example_spectra/1705090042013241.fits 1705090042013242.fits       or
-EPIC_prep.py --HERMES example_spectra/170509004201324* (wildcard under Linux)
+  $ python3 EPIC_prep.py --HERMES example_spectra/1705090042013241.fits 1705090042013242.fits   # or
+  $ python3 EPIC_prep.py --HERMES example_spectra/170509004201324*                              # (wildcard under Linux)
 
 It will return the prepared spectrum under the name
-Norm_{initial file name}                                         (for HERMES spectra)
-HERMES_{star name as found in the HARPS header}(1-3).fits        (for HARPS spectra)
+
+  $ Norm_{initial file name}(1-4).fits                            # for HERMES spectra
+  $ HERMES_{star name as found in the HARPS header}(1-3).fits     # for HARPS spectra
 
 These files can be used in the EPIC main program.
 
+*EPIC* main algorithm
+=====================
 
-Usage:
+
+Usage
+-----
 EPIC.py (Options) [1.reference / 2.target HERMES]
 
 EPIC is simply used via the command line and at the minimum requires two arguments: The reference spectrum (without the x.fits extension) and at least one target spectrum.
