@@ -1,7 +1,7 @@
 *EPIC*: A new code to measure stellar parameters of Sun like stars
 ==================================================================
 Python Version 3.7.4 or later.
-The EPIC algorithm was created to analyse spectra from the HERMES spectrograph effectively and efficiently. It calculates equivalent witdths (EWs) for lines found within a line list (default Master_ll) and uses a sub-group of these lines in order to calculate stellar parameters (effective temperature T_eff, surface gravity log(g) and metallicity [Fe/H]). The whole process of the algorithm was explained in detail in Lehmann et al. (2022).
+The EPIC algorithm was created to analyse spectra from the HERMES spectrograph effectively and efficiently. It calculates equivalent widths (EWs) for lines found within a line list (default Master_ll) and uses a sub-group of these lines in order to calculate stellar parameters (effective temperature T_eff, surface gravity log(g) and metallicity [Fe/H]). The whole process of the algorithm was explained in detail in Lehmann et al. (2022).
 
 
 Preparation of spectra
@@ -53,7 +53,7 @@ Options
 -------
 EPIC has several option that might be needed in different situations:
 
-  -a, --air_corr: The spectrum is in air wavelength and therefore will need to be corrected to a vaccuum wavelength scale (using the Edlen 1953 formula).
+  -a, --air_corr: The spectrum is in air wavelength and therefore will need to be corrected to a vacuum wavelength scale (using the Edlen 1953 formula).
 
 
   -e, --err [exptime] [vmag]: Add noise to the target spectrum by giving exposure time(s), mag of V band and base noise. The noise in each band is calculated using solar relations between the bands, e.g. the red band has r_mag = v_mag - 0.352
@@ -75,11 +75,11 @@ Output
 ------
 Each of these files can be read in via Topcat using the Ascii input option.
 
-  Li_line.dat: A file that gathers the EW of the Li line at 6707.76 Angstrom. It displys the EW for bother the reference and target spectrum as well as their uncertainties. EPIC will add to this file for each spectrum that is analysed to give a statistic for the Li lines.
+  Li_line.dat: A file that gathers the EW of the Li line at 6707.76 Angstrom. It displays the EW for bother the reference and target spectrum as well as their uncertainties. EPIC will add to this file for each spectrum that is analysed to give a statistic for the Li lines.
   Note that this is a weak and not very stable line, so most low SNR spectra will not measure a reasonable value here. It is only interesting to measure this line when the Li content in a star is high.
 
 
-  EW.dat.gz file: A gziped file that contains the EW width measurments of all lines within the line list that was given to EPIC. Each spectrum will have a new file that saves all their respective EW values. Displays EW for both the target and reference spectrum as well as their difference and uncertainties.
+  EW.dat.gz file: A gziped file that contains the EW width measurements of all lines within the line list that was given to EPIC. Each spectrum will have a new file that saves all their respective EW values. Displays EW for both the target and reference spectrum as well as their difference and uncertainties.
 Note that not all lines are used to measure the EW, but all lines will have an EW measurement if the measurement can be done successfully.
 
 
