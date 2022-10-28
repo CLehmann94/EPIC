@@ -7,7 +7,7 @@ Precision of EPIC
 =================
 The main advantage of EPIC is the increase of precision/decrease of uncertainties for stellar parameters.
 
-.. image:: https://github.com/CLehmann94/EPIC/tree/master/calibration/Paper_uncertainties.pdf
+.. image:: https://github.com/CLehmann94/EPIC/blob/master/Diagrams/EPIC_uncertainties.png
     :width: 100%
     :align: center
     :alt: EPIC uncertainty by S/N
