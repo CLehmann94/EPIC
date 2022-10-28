@@ -5,10 +5,10 @@ The EPIC algorithm was created to analyse spectra from the HERMES spectrograph e
 
 Precision of EPIC
 =================
-The main advantage of EPIC is the increase of precision/decrease of uncertainties for stellar parameters.
+The main advantage of EPIC is the increase of precision/decrease of uncertainties for stellar parameters. The following diagram shows EPIC measured uncertainties (blue dots) with the median measured uncertainty displayed (orange line). For a better comparison, the red dashed line displays the median uncertainties of The Cannon, the algorithm used by the GALAH survey in their second data release.
 
 .. image:: https://github.com/CLehmann94/EPIC/blob/master/Diagrams/EPIC_uncertainties.png
-    :width: 100%
+    :width: 70%
     :align: center
     :alt: EPIC uncertainty by S/N
 
