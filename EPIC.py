@@ -872,28 +872,31 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
         if plot_switch3 is True and ele == 'Li':
             pdf = matplotlib.backends.backend_pdf.PdfPages("Line_measure.pdf")
             fig, p = plt.subplots(1, 1)
-            fig.set_figheight(6)
-            fig.set_figwidth(11)
+            fig.set_figheight(4)
+            fig.set_figwidth(7)
+
+            plot_shift = twav[2] - twav[0]
 
             p.step(rwav2, rflux2, label='Sun')
-            p.step(twav, tflux, label='Twin candidate')
+            p.step(twav - plot_shift, tflux, label='Twin candidate')
             p.axhline(1, color='black', ls='--')
             p.axvline(nline - lw2_wav, color='blue', ls='--')
             p.axvline(nline + lw2_wav, color='blue', ls='--')
             p.axvline(nline, color='purple', linestyle='-')
-            p.set_xlim(line - lspa_wav/2, line + lspa_wav/2)
+#            p.set_xlim(line - lspa_wav/2, line + lspa_wav/2)
+            p.set_xlim(6705.001, 6713.999)
             p.legend(loc='lower right')
-            p.set_xlabel(r'\LARGE Wavelength [\AA]')
-            p.set_ylabel(r'\LARGE Normalized Flux')
-            p.set_ylim(0.4, 1.1)
+            p.set_xlabel(r'Wavelength [\AA]')
+            p.set_ylabel(r'Normalized Flux')
+            p.set_ylim(0.70001, 1.05)
 
             p.xaxis.set_minor_locator(AutoMinorLocator())
             p.yaxis.set_minor_locator(AutoMinorLocator())
             p.set_rasterization_zorder(-20)
-            fig.subplots_adjust(left=0.072, right=0.985, bottom=0.132,
-                                top=0.975, wspace=0.0, hspace=0.0)
+            fig.subplots_adjust(left=0.1, right=0.999, bottom=0.156,
+                                top=0.999, wspace=0.0, hspace=0.0)
 
-            plt.show()
+            pdf.savefig(fig)
             plt.clf()
             pdf.close()
 
