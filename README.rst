@@ -3,6 +3,9 @@
 Python Version 3.7.4 or later.
 The EPIC algorithm was created to analyse spectra from the HERMES spectrograph effectively and efficiently. It calculates equivalent widths (EWs) for lines found within a line list (default Master_ll) and uses a sub-group of these lines in order to calculate stellar parameters (effective temperature T_eff, surface gravity log(g) and metallicity [Fe/H]). The whole process of the algorithm was explained in detail in Lehmann et al. (2022).
 
+Precision of EPIC
+=================
+The main advantage of EPIC is the increase of precision/decrease of uncertainties for stellar parameters.
 
 .. image:: https://github.com/CLehmann94/EPIC/tree/master/calibration/Paper_uncertainties.pdf
     :width: 100%
