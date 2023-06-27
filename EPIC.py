@@ -203,7 +203,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     plot_H = False
     plot_switch = False
     plot_switch1 = False
-    plot_switch2 = [False, False, False, False]
+    plot_switch2 = [True, True, True, True]
     plot_switch3 = False
     plot_switch4 = False
 #    plotold = False
@@ -366,17 +366,23 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
     lines, elem, ion, EP = readlinelistw(ll)
     og_lines = lines + 0
 
-#    use = np.zeros(len(lines))
+
+    UL_con = np.char.endswith(elem, '+')
+    nUL_con = np.logical_not(UL_con)
+    temp = np.array([])
+    for i in range(len(elem[UL_con])):
+        temp = np.append(temp, elem[UL_con][i][:-1])
+    elem[UL_con] = temp
+
     if air_corr is True:
         lines2 = air2vacESO(lines * u.Angstrom).value
+        lines[nUL_con] = lines2[nUL_con]
 
-    lines[ion != 3] = lines2[ion != 3]
     out_file = gzip.open(out, mode="wt")
     out_file.write('#elem  ion  wave          EW_ref      sig_EW_ref '
                    'EW_tar      sig_EW_tar EW_difference '
                    'sig_EW_difference\n')
 
-#    out_file2 = open(out2, 'w')
 
     if single_pivot is True:
         ap_corr = read_ap_correct(lines, elem, ion, ap_number, callibration,
@@ -842,13 +848,14 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             lpp_reference_norm_f = np.array(rflux2)
             lpp_reference_norm_w = np.array(rwav2)
 
-        if plot_switch2[tnum]:
+        if plot_switch2[tnum] and ele == 'UL':
             plt.plot(rwav2, rflux2, label='Ref spectrum')
             plt.plot(twav, tflux, label='Tar spectrum')
-            plt.plot(twav, terr/(np.max(terr)*2), label='Err Array')
+            # plt.plot(twav, terr/(np.max(terr)*2), label='Err Array')
             plt.axhline(1.0, color='black')
             plt.axvline(line, color='blue')
             plt.axvline(nline, color='purple', linestyle='--')
+            plt.title(str(nline))
             plt.xlim(line - lspa_wav, line + lspa_wav)
             plt.legend(loc='lower left')
             plt.show()
@@ -875,7 +882,7 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             fig.set_figheight(4)
             fig.set_figwidth(7)
 
-            plot_shift = twav[2] - twav[0]
+            plot_shift = twav[1] - twav[0]
 
             p.step(rwav2, rflux2, label='Sun')
             p.step(twav - plot_shift, tflux, label='Twin candidate')
@@ -883,8 +890,9 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
             p.axvline(nline - lw2_wav, color='blue', ls='--')
             p.axvline(nline + lw2_wav, color='blue', ls='--')
             p.axvline(nline, color='purple', linestyle='-')
+            p.axvline(6709.28, color='gray', linestyle='-')
 #            p.set_xlim(line - lspa_wav/2, line + lspa_wav/2)
-            p.set_xlim(6705.001, 6713.999)
+            p.set_xlim(6708.3, 6710.7)
             p.legend(loc='lower right')
             p.set_xlabel(r'Wavelength [\AA]')
             p.set_ylabel(r'Normalized Flux')
@@ -1296,8 +1304,12 @@ def main_EPIC(argv=[], spec_name='', ref_name='', reduce_out=False):
                          lstsq[0], Li_EW)
             Li_ab_err = A_Li_err(P_Li[0], P_Li[2], P_Li[4], lstsq[0],
                                  lstsq_sig[0], Li_EW, Li_dEW)
-            Li_EW_sign = Li_EW_tonly / Li_dEW
+            if harps is True:
+                Li_EW_sign = 0
+            else:
+                Li_EW_sign = Li_EW_tonly / Li_dEW
             if resolv_switch is True and len(br_ref) > 0:
+                print(len(br_ref), len(br_tar), len(br_ref2), len(br_tar2))
                 br_av_ref = np.average(br_ref, weights=1/np.square(br_ref_err))
                 br_av_tar = np.average(br_tar, weights=1/np.square(br_tar_err))
                 br_av_ref_err = np.sqrt(1 / np.sum(1 / np.square(br_ref_err)))

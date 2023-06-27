@@ -118,38 +118,38 @@
 | Al     | 1     | 7835.309    | 4.022        |
 | Al     | 1     | 7836.134    | 4.022        |
 | Si     | 1     | 7849.984    | 6.191        |
-| UL     | 3     | 4745.74     | 0.0          |
-| UL     | 3     | 4749.47     | 0.0          |
-| UL     | 3     | 4765.26     | 0.0          |
-| UL     | 3     | 4774.16     | 0.0          |
-| UL     | 3     | 4791.00     | 0.0          |
-| UL     | 3     | 4808.33     | 0.0          |
-| UL     | 3     | 4819.16     | 0.0          |
-| UL     | 3     | 4825.50     | 0.0          |
-| UL     | 3     | 4830.74     | 0.0          |
-| UL     | 3     | 4834.09     | 0.0          |
-| UL     | 3     | 4840.91     | 0.0          |
-| UL     | 3     | 4849.61     | 0.0          |
-| UL     | 3     | 4852.85     | 0.0          |
-| UL     | 3     | 5677.00     | 0.0          |
-| UL     | 3     | 5693.09     | 0.0          |
-| UL     | 3     | 5695.25     | 0.0          |
-| UL     | 3     | 5707.59     | 0.0          |
-| UL     | 3     | 5708.68     | 0.0          |
-| UL     | 3     | 5716.69     | 0.0          |
-| UL     | 3     | 5719.45     | 0.0          |
-| UL     | 3     | 5753.66     | 0.0          |
-| UL     | 3     | 5792.62     | 0.0          |
-| UL     | 3     | 6571.05     | 0.0          |
-| UL     | 3     | 6576.88     | 0.0          |
-| UL     | 3     | 6706.96     | 0.0          |
-| UL     | 3     | 6728.57     | 0.0          |
-| UL     | 3     | 7716.42     | 0.0          |
-| UL     | 3     | 7725.34     | 0.0          |
-| UL     | 3     | 7744.87     | 0.0          |
-| UL     | 3     | 7782.75     | 0.0          |
-| UL     | 3     | 7810.04     | 0.0          |
-| UL     | 3     | 7834.36     | 0.0          |
+| Ni+     | 1     | 4745.74     | 0.0          | #Previously unknown
+| V+      | 1     | 4749.47     | 0.0          | #Previously unknown
+| Ni+     | 1     | 4765.26     | 0.0          | #Previously unknown
+| Fe+     | 1     | 4774.16     | 0.0          | #Previously unknown
+| Fe+     | 1     | 4791.00     | 0.0          | #Previously unknown
+| Ni+     | 1     | 4808.33     | 0.0          | #Previously unknown
+| Ni+     | 1     | 4819.16     | 0.0          | #Previously unknown
+| Fe+     | 1     | 4825.50     | 0.0          | #Previously unknown
+| Cr+     | 1     | 4830.74     | 0.0          | #Previously unknown
+| Sc+     | 2     | 4834.09     | 0.0          | #Previously unknown
+| Ti+     | 1     | 4840.91     | 0.0          | #Previously unknown
+| Ti+     | 1     | 4849.61     | 0.0          | #Previously unknown
+| Ne+     | 1     | 4852.85     | 0.0          | #Previously unknown
+| Fe+     | 2     | 5677.00     | 0.0          | #Previously unknown
+| V+      | 1     | 5693.09     | 0.0          | #Previously unknown
+| Mn+     | 1     | 5695.25     | 0.0          | #Previously unknown
+| Ca+     | 1     | 5707.59     | 0.0          | #Previously unknown
+| Fe+     | 2     | 5708.68     | 0.0          | #Previously unknown
+| Sc+     | 1     | 5716.69     | 0.0          | #Previously unknown
+| Mn+     | 1     | 5719.45     | 0.0          | #Previously unknown
+| Fe+     | 2     | 5753.66     | 0.0          | #Previously unknown
+| Ca+     | 1     | 5792.62     | 0.0          | #Previously unknown
+| Fe+     | 2     | 6571.05     | 0.0          | #Previously unknown
+| Ca+     | 1     | 6576.88     | 0.0          | #Previously unknown
+| Ca+     | 1     | 6706.96     | 0.0          | #Previously unknown
+| Fe+     | 2     | 6728.57     | 0.0          | #Previously unknown
+| Ca+     | 1     | 7716.42     | 0.0          | #Previously unknown
+| Ca+     | 1     | 7725.34     | 0.0          | #Previously unknown
+| Ca+     | 1     | 7744.87     | 0.0          | #Previously unknown
+| Fe+     | 1     | 7782.75     | 0.0          | #Previously unknown
+| Fe+     | 2     | 7810.04     | 0.0          | #Previously unknown
+| Fe+     | 1     | 7834.36     | 0.0          | #Previously unknown
 #| Li     | 1     | 6707.76     | 0.0          | Only median of feature
 | Li     | 1     | 6707.81     | 0.0          |
 | C      | 1     | 6587.61     | 8.54         |
